@@ -1,0 +1,85 @@
+image: ghdl/ghdl:ubuntu22-llvm-11
+
+# Pour ne pas réinstaller les outils à chaque job, utiliser un runner avec tous les
+# outils préinstallés.
+
+# TODO : on peut ajouter un formatteur de code, un générateur de documentation…
+
+stages:
+  - compilation
+  - tests
+  - deliver
+
+SW_compilation:
+  stage: compilation
+  script:
+    - ./CI/build_sw.sh
+  artifacts:
+    name: "SW"
+    expire_in: 1 week
+    paths:
+      - SW/build/program.exe
+
+HW_compilation:
+  stage: compilation
+  script:
+    - ./CI/build_hw.sh
+  artifacts:
+    name: "HW"
+    expire_in: 1 week
+    paths:
+      - HW/build/work-obj93.cf
+
+pre_commit:
+  stage: tests
+  before_script:
+    - apt -y update
+    - apt -y install python3 python3-pip clang-format
+    - apt -y install git --no-install-recommends
+    - python3 -m pip install pre-commit
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - pre-commit install
+  script:
+    - ./CI/pre_commit.sh
+
+SW_test:
+  stage: tests
+  before_script:
+    - apt -y update
+    - apt -y install libcriterion-dev
+  script:
+    - ./CI/test_sw.sh
+
+SW_lint:
+  stage: tests
+  before_script:
+    - apt -y update
+    - apt -y install cppcheck clang-tidy libcriterion-dev
+  script:
+    - ./CI/lint_sw.sh
+
+HW_test:
+  stage: tests
+  script:
+    - ./CI/build_hw.sh # temporary hack
+    - ./CI/test_hw.sh
+
+HW_lint:
+  stage: tests
+  before_script:
+    - apt -y update
+    - apt -y install python3 python3-pip
+    - python3 -m pip install vsg
+  script:
+    - ./CI/lint_hw.sh
+
+delivery:
+  stage: deliver
+  script:
+    - echo "preparing delivery files"
+  artifacts:
+    name: "delivery"
+    expire_in: 1 week
+    paths:
+      - SW/build/program.exe
+      - HW/build/work-obj93.cf

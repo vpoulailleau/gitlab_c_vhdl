@@ -1,0 +1,13 @@
+rule :
+  port_007:
+    spaces_before: 1
+    spaces_after : 1
+  port_008:
+    spaces_before: 1
+    spaces_after : 1
+  generic_map_006:
+    number_of_spaces: 0
+  constant_016:
+     open_paren_new_line : 'ignore'
+     close_paren_new_line : 'ignore'
+     new_line_after_comma : 'ignore_positional'
